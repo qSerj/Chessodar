@@ -132,6 +132,12 @@ async def reset():
     board = chess.Board()
     return {"status": "ok"}
 
+@app.post("/undo")
+async def undo_move():
+    if len(board.move_stack) > 0:
+        board.pop()
+        return {"status": "ok"}
+    return {"status": "empty_stack"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,74 +1,101 @@
 var board = null;
+var currentHint = null;
 
-async function updateUI() {
+const App = {
+    mode: 'play',
+    showHints: true,
+    autoPlay: false,
+    board: null,
+    blockAutoPlay: false // Наш новый предохранитель
+};
+
+// Функция переключения табов
+window.openTab = function(evt, tabId) {
+    $('.tab-content').removeClass('active');
+    $('.tab-btn').removeClass('active');
+    $(`#${tabId}`).addClass('active');
+    $(evt.currentTarget).addClass('active');
+};
+
+window.updateUI = async function() {
     const res = await fetch('/status');
     const data = await res.json();
 
     board.position(data.fen);
-    updateEvalBar(data.score);
-    renderHistory(data.history);
-    highlightBestMove(data.next_best_move);
 
-    document.getElementById('fen-display').innerText = data.fen;
-}
+    currentHint = data.next_best_move;
 
+    // Обновление шкалы
+    let displayScore = Math.max(-5, Math.min(5, data.score));
+    let percentage = ((displayScore + 5) / 10) * 100;
+    $('#eval-bar-fill').css('height', percentage + '%');
+    $('#eval-score-text').text(data.score.toFixed(1));
+
+    highlightBestMove(null);
+
+    // Авто-ход
+    const canAutoPlay = $('#auto-play-check').is(':checked') && data.turn === 'b' && !data.is_game_over && !App.blockAutoPlay;
+
+    if (canAutoPlay) {
+        setTimeout(makeAiMove, 600);
+    }
+
+    App.blockAutoPlay = false;
+
+    // Текст статуса
+    let statusText = data.is_game_over ? "Игра окончена" : (data.turn === 'w' ? "Ход белых" : "Ход черных");
+    $('#game-status-line').text(statusText);
+};
+
+window.makeAiMove = async function() {
+    await fetch('/stockfish_move', { method: 'POST' });
+    updateUI();
+};
+
+window.resetGame = async function() {
+    await fetch('/reset', { method: 'POST' });
+    updateUI();
+};
+
+window.undoMove = async function() {
+    App.blockAutoPlay = true;
+    await fetch('/undo', { method: 'POST' });
+    updateUI();
+};
+
+// Функция для кнопки "Подсказка"
+window.showHint = function() {
+    if (currentHint) {
+        highlightBestMove(currentHint);
+    } else {
+        console.log("Подсказка еще не готова или партия окончена");
+    }
+};
+
+// Исправленная функция подсветки
 function highlightBestMove(move) {
-    // Удаляем старую подсветку со всех клеток
-    // Chessboard.js добавляет класс .square-XXXX к каждой клетке
-    $('.square-55d63').removeClass('highlight-hint');
+    // Очищаем все подсвеченные клетки (универсальный способ)
+    $('.highlight-hint').removeClass('highlight-hint');
 
     if (!move) return;
 
-    // Парсим UCI строку (например, "e2e4")
-    const from = move.slice(0, 2); // "e2"
-    const to = move.slice(2, 4);   // "e4"
+    const from = move.slice(0, 2);
+    const to = move.slice(2, 4);
 
-    // Добавляем класс нужным клеткам через jQuery
-    // (chessboard.js помечает клетки как .square-e2, .square-e4)
+    // Добавляем подсветку
     $(`.square-${from}`).addClass('highlight-hint');
     $(`.square-${to}`).addClass('highlight-hint');
 }
 
-function updateEvalBar(score) {
-    let displayScore = Math.max(-5, Math.min(5, score));
-    let percentage = ((displayScore + 5) / 10) * 100;
-
-    document.getElementById('eval-bar-fill').style.height = percentage + '%';
-    document.getElementById('eval-score-text').innerText = score.toFixed(1);
-    document.getElementById('eval-score-text').style.color = percentage > 50 ? 'black' : 'white';
-}
-
-function renderHistory(history) {
-    let html = "";
-    for (let i = 0; i < history.length; i += 2) {
-        let moveNum = Math.floor(i/2) + 1;
-        html += `<div><span>${moveNum}.</span> ${history[i]} ${history[i+1] || ''}</div>`;
-    }
-    const container = document.getElementById('move-list');
-    container.innerHTML = html;
-    container.scrollTop = container.scrollHeight;
-}
-
-function onDrop (source, target) {
-    let moveUci = source + target;
+function onDrop(source, target) {
     fetch('/make_move', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({move: moveUci})
+        body: JSON.stringify({move: source + target})
     }).then(() => updateUI());
 }
 
-async function makeAiMove() {
-    await fetch('/stockfish_move', {method: 'POST'});
-    updateUI();
-}
-
-async function resetGame() {
-    await fetch('/reset', {method: 'POST'});
-    updateUI();
-}
-
-// Инициализация
+// Старт
 $(document).ready(function () {
     board = Chessboard('board', {
         draggable: true,
