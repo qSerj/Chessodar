@@ -23,10 +23,14 @@ async def lifespan(app: FastAPI):
     # Выполняется при старте сервера (Startup)
     engine_instance = chess.engine.SimpleEngine.popen_uci(config['stockfish_path'])
     yield
-    # Выполняется при выключении (Shutdown) - аналог Destructor
+    print("Остановка Stockfish...")
     if engine_instance:
-        engine_instance.quit()
-
+        try:
+            # Пытаемся закрыть вежливо
+            engine_instance.quit()
+        except (chess.engine.EngineTerminatedError, Exception):
+            # Если он уже "мертв" или произошла ошибка связи — это не критично при выходе
+            print("Stockfish уже был завершен или не ответил.")
 
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
