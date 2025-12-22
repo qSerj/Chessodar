@@ -1,17 +1,23 @@
-        body { background: #2c3e50; color: white; font-family: sans-serif; display: flex; height: 100vh; margin: 0; }
+body { background: #2c3e50; color: white; font-family: sans-serif; display: flex; height: 100vh; margin: 0; }
 
-        /* Шкала оценки */
-        #eval-bar-container { width: 30px; background: #555; height: 500px; margin: 20px 10px; position: relative; border-radius: 4px; overflow: hidden; border: 2px solid #1a252f; }
-        #eval-bar-fill { position: absolute; bottom: 0; width: 100%; background: white; transition: height 0.5s ease-in-out; height: 50%; }
-        #eval-score-text { position: absolute; top: 50%; width: 100%; text-align: center; color: #000; font-weight: bold; font-size: 10px; z-index: 2; transform: translateY(-50%); }
+/* Шкала оценки */
+#eval-bar-container { width: 30px; background: #555; height: 500px; margin: 20px 10px; position: relative; border-radius: 4px; overflow: hidden; border: 2px solid #1a252f; }
+#eval-bar-fill { position: absolute; bottom: 0; width: 100%; background: white; transition: height 0.5s ease-in-out; height: 50%; }
+#eval-score-text { position: absolute; top: 50%; width: 100%; text-align: center; color: #000; font-weight: bold; font-size: 10px; z-index: 2; transform: translateY(-50%); }
 
-        #main-layout { display: flex; padding: 20px; }
-        #board { width: 500px; }
+#main-layout { display: flex; padding: 20px; }
+#board { width: 500px; }
 
-        #right-panel { width: 300px; padding: 20px; background: #34495e; display: flex; flex-direction: column; }
-        .move-history { background: #1a252f; flex-grow: 1; padding: 10px; overflow-y: auto; border-radius: 5px; font-family: monospace; font-size: 14px; line-height: 1.6; }
-        .move-history span { margin-right: 10px; color: #f1c40f; }
+#right-panel { width: 300px; padding: 20px; background: #34495e; display: flex; flex-direction: column; }
+.move-history { background: #1a252f; flex-grow: 1; padding: 10px; overflow-y: auto; border-radius: 5px; font-family: monospace; font-size: 14px; line-height: 1.6; }
+.move-history span { margin-right: 10px; color: #f1c40f; }
 
-        .controls { margin-top: 20px; }
-        button { width: 100%; padding: 10px; margin-bottom: 5px; cursor: pointer; border: none; border-radius: 4px; background: #27ae60; color: white; font-weight: bold; }
-        button:hover { background: #2ecc71; }
+.controls { margin-top: 20px; }
+button { width: 100%; padding: 10px; margin-bottom: 5px; cursor: pointer; border: none; border-radius: 4px; background: #27ae60; color: white; font-weight: bold; }
+button:hover { background: #2ecc71; }
+
+/* Класс для подсветки лучшего хода (Советник) */
+.highlight-hint {
+    box-shadow: inset 0 0 3px 3px yellow;
+    background-color: rgba(255, 255, 0, 0.3) !important;
+}

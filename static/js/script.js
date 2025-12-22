@@ -7,7 +7,26 @@ async function updateUI() {
     board.position(data.fen);
     updateEvalBar(data.score);
     renderHistory(data.history);
+    highlightBestMove(data.next_best_move);
+
     document.getElementById('fen-display').innerText = data.fen;
+}
+
+function highlightBestMove(move) {
+    // Удаляем старую подсветку со всех клеток
+    // Chessboard.js добавляет класс .square-XXXX к каждой клетке
+    $('.square-55d63').removeClass('highlight-hint');
+
+    if (!move) return;
+
+    // Парсим UCI строку (например, "e2e4")
+    const from = move.slice(0, 2); // "e2"
+    const to = move.slice(2, 4);   // "e4"
+
+    // Добавляем класс нужным клеткам через jQuery
+    // (chessboard.js помечает клетки как .square-e2, .square-e4)
+    $(`.square-${from}`).addClass('highlight-hint');
+    $(`.square-${to}`).addClass('highlight-hint');
 }
 
 function updateEvalBar(score) {
