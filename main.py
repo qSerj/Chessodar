@@ -5,11 +5,13 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 with open('config.json') as f:
     config = json.load(f)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 board = chess.Board()
 
 

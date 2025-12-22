@@ -4,25 +4,8 @@
     <meta charset="UTF-8">
     <title>Chessodar Lab PRO</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <style>
-        body { background: #2c3e50; color: white; font-family: sans-serif; display: flex; height: 100vh; margin: 0; }
 
-        /* Шкала оценки */
-        #eval-bar-container { width: 30px; background: #555; height: 500px; margin: 20px 10px; position: relative; border-radius: 4px; overflow: hidden; border: 2px solid #1a252f; }
-        #eval-bar-fill { position: absolute; bottom: 0; width: 100%; background: white; transition: height 0.5s ease-in-out; height: 50%; }
-        #eval-score-text { position: absolute; top: 50%; width: 100%; text-align: center; color: #000; font-weight: bold; font-size: 10px; z-index: 2; transform: translateY(-50%); }
-
-        #main-layout { display: flex; padding: 20px; }
-        #board { width: 500px; }
-
-        #right-panel { width: 300px; padding: 20px; background: #34495e; display: flex; flex-direction: column; }
-        .move-history { background: #1a252f; flex-grow: 1; padding: 10px; overflow-y: auto; border-radius: 5px; font-family: monospace; font-size: 14px; line-height: 1.6; }
-        .move-history span { margin-right: 10px; color: #f1c40f; }
-
-        .controls { margin-top: 20px; }
-        button { width: 100%; padding: 10px; margin-bottom: 5px; cursor: pointer; border: none; border-radius: 4px; background: #27ae60; color: white; font-weight: bold; }
-        button:hover { background: #2ecc71; }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
@@ -50,76 +33,7 @@
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
-<script>
-    var board = null;
+<script src="/static/js/script.js"></script>
 
-    async function updateUI() {
-        const res = await fetch('/status');
-        const data = await res.json();
-
-        // Обновляем доску
-        board.position(data.fen);
-
-        // Обновляем шкалу оценки
-        updateEvalBar(data.score);
-
-        // Обновляем историю ходов
-        renderHistory(data.history);
-
-        document.getElementById('fen-display').innerText = data.fen;
-    }
-
-    function updateEvalBar(score) {
-        // Ограничиваем шкалу от -5 до +5 для наглядности
-        let displayScore = Math.max(-5, Math.min(5, score));
-        // Вычисляем проценты (0 = 50%, +5 = 100%, -5 = 0%)
-        let percentage = ((displayScore + 5) / 10) * 100;
-
-        document.getElementById('eval-bar-fill').style.height = percentage + '%';
-        document.getElementById('eval-score-text').innerText = score.toFixed(1);
-
-        // Меняем цвет текста в зависимости от того, на чьем он фоне
-        document.getElementById('eval-score-text').style.color = percentage > 50 ? 'black' : 'white';
-    }
-
-    function renderHistory(history) {
-        let html = "";
-        for (let i = 0; i < history.length; i += 2) {
-            let moveNum = Math.floor(i/2) + 1;
-            html += `<div><span>${moveNum}.</span> ${history[i]} ${history[i+1] || ''}</div>`;
-        }
-        const container = document.getElementById('move-list');
-        container.innerHTML = html;
-        container.scrollTop = container.scrollHeight; // Авто-скролл вниз
-    }
-
-    function onDrop (source, target) {
-        let moveUci = source + target;
-        fetch('/make_move', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({move: moveUci})
-        }).then(() => updateUI());
-    }
-
-    async function makeAiMove() {
-        await fetch('/stockfish_move', {method: 'POST'});
-        updateUI();
-    }
-
-    async function resetGame() {
-        await fetch('/reset', {method: 'POST'});
-        updateUI();
-    }
-
-    board = Chessboard('board', {
-        draggable: true,
-        position: 'start',
-        onDrop: onDrop,
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-    });
-
-    updateUI();
-</script>
 </body>
 </html>
