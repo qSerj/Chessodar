@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Конфиги и движки
+stockfish*
+*.exe
+config.json
+
+# Логи
+*.log
