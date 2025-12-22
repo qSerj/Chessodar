@@ -38,10 +38,22 @@ class MoveModel(BaseModel):
 
 # --- 4. Вспомогательные функции ---
 def get_history_san():
-    """ Формирует список ходов в человеческой нотации (SAN) """
+    """
+    Надежно формирует список ходов в SAN (например, ['e4', 'e5', 'Nf3']).
+    Мы создаем временную доску и 'проигрываем' партию с нуля,
+    чтобы получить правильную нотацию для каждого шага.
+    """
     temp_board = chess.Board()
-    return [temp_board.push_san(temp_board.san(m)).uci() and temp_board.san(m) for m in board.move_stack]
+    san_history = []
 
+    for move in board.move_stack:
+        # Сначала получаем SAN-строку (например, 'e4')
+        san_move = temp_board.san(move)
+        san_history.append(san_move)
+        # Потом реально делаем этот ход на временной доске
+        temp_board.push(move)
+
+    return san_history
 
 # --- 5. Эндпоинты (API) ---
 
