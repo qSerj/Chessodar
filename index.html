@@ -44,7 +44,21 @@
         </div>
 
         <div id="editor-tab" class="tab-content">
-            <p>Редактор в разработке...</p>
+            <h3>Редактор позиции</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="action-btn" onclick="enterEditorMode()" style="background: #3498db;">Войти в режим редактирования</button>
+
+                <div id="editor-controls" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="action-btn" onclick="clearBoard()" style="background: #7f8c8d;">Очистить доску</button>
+                    <button class="action-btn" onclick="setStartPosition()" style="background: #9b59b6;">Начальная позиция</button>
+                    <hr>
+                    <button class="action-btn" onclick="saveEditorPosition()" style="background: #27ae60;">Сохранить и выйти</button>
+                    <button class="danger-btn" onclick="exitEditorMode()">Отмена</button>
+                </div>
+            </div>
+            <p style="font-size: 0.8em; color: #666; margin-top: 10px;">
+                В режиме редактирования можно перетаскивать запасные фигуры на доску или выбрасывать ненужные за её пределы.
+            </p>
         </div>
     </div>
 </div>

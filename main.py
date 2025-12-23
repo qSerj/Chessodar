@@ -35,10 +35,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
 class MoveModel(BaseModel):
     move: str  # UCI формат, например "e2e4"
 
+class FenModel(BaseModel):
+    fen: str
 
 # --- 4. Вспомогательные функции ---
 def get_history_san():
@@ -138,6 +139,23 @@ async def undo_move():
         board.pop()
         return {"status": "ok"}
     return {"status": "empty_stack"}
+
+@app.post("/clear_board")
+async def clear_board():
+    global board
+    board.clear() # Создает пустую доску без фигур
+    return {"status": "ok", "fen": board.fen()}
+
+@app.post("/set_fen")
+async def set_fen(data: FenModel):
+    global board
+    try:
+        # Пытаемся создать доску из присланного FEN
+        new_board = chess.Board(data.fen)
+        board = new_board
+        return {"status": "ok", "fen": board.fen()}
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Некорректный FEN")
 
 if __name__ == "__main__":
     import uvicorn

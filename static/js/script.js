@@ -23,6 +23,8 @@ window.updateUI = async function() {
 
     board.position(data.fen);
 
+    renderHistory(data.history);
+
     currentHint = data.next_best_move;
 
     // Обновление шкалы
@@ -72,6 +74,29 @@ window.showHint = function() {
     }
 };
 
+window.renderHistory = function(history) {
+    let html = "";
+    // Проходим по массиву, объединяя ходы в пары (1. e4 e5)
+    for (let i = 0; i < history.length; i += 2) {
+        let moveNum = Math.floor(i / 2) + 1;
+        let whiteMove = history[i];
+        let blackMove = history[i + 1] || ""; // Если черные еще не сходили, будет пусто
+
+        html += `<div class="move-row">
+                    <span class="move-num">${moveNum}.</span>
+                    <span class="move-val">${whiteMove}</span>
+                    <span class="move-val">${blackMove}</span>
+                 </div>`;
+    }
+
+    const container = document.getElementById('move-list');
+    if (container) {
+        container.innerHTML = html;
+        // Автоматическая прокрутка вниз к последнему ходу (аналог AutoScroll)
+        container.scrollTop = container.scrollHeight;
+    }
+};
+
 // Исправленная функция подсветки
 function highlightBestMove(move) {
     // Очищаем все подсвеченные клетки (универсальный способ)
@@ -95,13 +120,75 @@ function onDrop(source, target) {
     }).then(() => updateUI());
 }
 
-// Старт
-$(document).ready(function () {
+// Входим в режим редактора
+window.enterEditorMode = function() {
+    $('#editor-controls').css('display', 'flex');
+    $('button[onclick="enterEditorMode()"]').hide();
+
+    // Пересоздаем доску с запасными фигурами
+    const config = {
+        draggable: true,
+        dropOffBoard: 'trash', // Фигуры можно выбрасывать с доски
+        sparePieces: true,     // Появляются кнопки с фигурами под доской
+        position: board.position(),
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    };
+
+    // Уничтожаем старую доску и создаем "редакторскую"
+    board.destroy();
+    board = Chessboard('board', config);
+};
+
+// Выход из редактора без сохранения
+window.exitEditorMode = function() {
+    $('#editor-controls').hide();
+    $('button[onclick="enterEditorMode()"]').show();
+
+    // Возвращаем обычную доску
+    initNormalBoard();
+    updateUI();
+};
+
+// Очистка доски
+window.clearBoard = async function() {
+    await fetch('/clear_board', { method: 'POST' });
+    board.clear(false); // false означает "без анимации"
+};
+
+// Начальная позиция
+window.setStartPosition = function() {
+    board.start(false);
+};
+
+// Сохранение позиции
+window.saveEditorPosition = async function() {
+    const fen = board.fen() + " w KQkq - 0 1"; // Добавляем стандартные хвосты FEN
+    const res = await fetch('/set_fen', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ fen: fen })
+    });
+
+    if (res.ok) {
+        exitEditorMode();
+    } else {
+        alert("Ошибка: Некорректная расстановка фигур!");
+    }
+};
+
+// Вспомогательная функция для инициализации обычной игры
+function initNormalBoard() {
+    if (board) board.destroy();
     board = Chessboard('board', {
         draggable: true,
         position: 'start',
         onDrop: onDrop,
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     });
+}
+
+// Старт
+$(document).ready(function () {
+    initNormalBoard(); // Используем общую функцию инициализации
     updateUI();
 });
