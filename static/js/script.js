@@ -39,6 +39,8 @@ window.updateUI = async function() {
         }
         App.blockAutoPlay = false;
 
+        $('#fen-display-input').val(data.fen);
+
         // 2. ТЕКСТ СТАТУСА (Прозрачная логика)
         let statusText = "";
         if (data.is_game_over) {
@@ -63,6 +65,30 @@ window.updateUI = async function() {
 
     } catch (err) {
         console.error("UI Update Error:", err);
+    }
+};
+
+// Функция для копирования в буфер обмена
+window.copyFenToClipboard = async function() {
+    const fenInput = document.getElementById('fen-display-input');
+    const fenText = fenInput.value;
+
+    try {
+        await navigator.clipboard.writeText(fenText);
+
+        // Визуальная обратная связь вместо alert (так приятнее)
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "Done!";
+        btn.style.background = "#27ae60";
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "#34495e";
+        }, 2000);
+
+    } catch (err) {
+        console.error('Не удалось скопировать FEN:', err);
     }
 };
 
