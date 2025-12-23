@@ -15,7 +15,6 @@ with open('config.json') as f:
 board = chess.Board()
 engine_instance = None  # Ссылка на процесс движка
 
-
 # --- 3. Жизненный цикл (аналог конструктора/деструктора приложения или RAII) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,6 +39,9 @@ class MoveModel(BaseModel):
 
 class FenModel(BaseModel):
     fen: str
+
+class SettingsModel(BaseModel):
+    depth: int
 
 # --- 4. Вспомогательные функции ---
 def get_history_san():
@@ -156,6 +158,14 @@ async def set_fen(data: FenModel):
         return {"status": "ok", "fen": board.fen()}
     except ValueError:
         raise HTTPException(status_code=400, detail="Некорректный FEN")
+
+@app.post("/settings")
+async def update_settings(data: SettingsModel):
+    global config
+    if 1 <= data.depth <= 20:
+        config['depth'] = data.depth
+        return {"status": "ok", "new_depth": config['depth']}
+    raise HTTPException(status_code=400, detail="Глубина должна быть от 1 до 20")
 
 if __name__ == "__main__":
     import uvicorn

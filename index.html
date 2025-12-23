@@ -28,10 +28,29 @@
         </div>
 
         <div id="play-tab" class="tab-content active">
-            <button class="action-btn" onclick="makeAiMove()">Сделать ход за ИИ</button>
-            <label><input type="checkbox" id="auto-play-check"> Авто-ход компьютера</label>
+            <h3>Настройки партии</h3>
+
+            <div class="control-group">
+                <label>Играть за:</label>
+                <select id="player-color" onchange="changeOrientation()">
+                    <option value="white">Белые</option>
+                    <option value="black">Черные</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Сложность (глубина): <span id="depth-value">15</span></label>
+                <input type="range" id="depth-slider" min="1" max="20" value="15"
+                       oninput="updateDepth(this.value)">
+            </div>
+
             <hr>
-            <button class="danger-btn" onclick="resetGame()">Новая игра</button>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="action-btn" onclick="makeAiMove()">Сделать ход за ИИ</button>
+                <label><input type="checkbox" id="auto-play-check"> Авто-ход компьютера</label>
+                <button class="danger-btn" onclick="resetGame()">Новая игра</button>
+            </div>
         </div>
 
         <div id="analysis-tab" class="tab-content">

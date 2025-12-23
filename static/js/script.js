@@ -6,7 +6,8 @@ const App = {
     showHints: true,
     autoPlay: false,
     board: null,
-    blockAutoPlay: false // Наш новый предохранитель
+    blockAutoPlay: false, // Наш новый предохранитель
+    isAiThinking: false
 };
 
 // Функция переключения табов
@@ -18,39 +19,60 @@ window.openTab = function(evt, tabId) {
 };
 
 window.updateUI = async function() {
-    const res = await fetch('/status');
-    const data = await res.json();
+    try {
+        const res = await fetch('/status');
+        const data = await res.json();
 
-    board.position(data.fen);
+        board.position(data.fen);
+        renderHistory(data.history);
 
-    renderHistory(data.history);
+        const playerColor = $('#player-color').val();
+        const turnColor = (data.turn === 'w' ? 'white' : 'black');
+        const autoPlay = $('#auto-play-check').is(':checked');
 
-    currentHint = data.next_best_move;
+        // 1. ЛОГИКА АВТО-ХОДА (Очищенная)
+        // ИИ ходит только если: включен авто-ход И не ход игрока И игра не закончена И нет блокировки И ИИ еще не думает
+        const isItAiTurn = (playerColor !== turnColor);
 
-    // Обновление шкалы
-    let displayScore = Math.max(-5, Math.min(5, data.score));
-    let percentage = ((displayScore + 5) / 10) * 100;
-    $('#eval-bar-fill').css('height', percentage + '%');
-    $('#eval-score-text').text(data.score.toFixed(1));
+        if (autoPlay && isItAiTurn && !data.is_game_over && !App.blockAutoPlay && !App.isAiThinking) {
+            setTimeout(makeAiMove, 600);
+        }
+        App.blockAutoPlay = false;
 
-    highlightBestMove(null);
+        // 2. ТЕКСТ СТАТУСА (Прозрачная логика)
+        let statusText = "";
+        if (data.is_game_over) {
+            statusText = "🏁 Игра окончена";
+        } else {
+            // Явное определение базовой надписи
+            statusText = (data.turn === 'w' ? "⚪ Ход белых" : "⚫ Ход черных");
 
-    // Авто-ход
-    const canAutoPlay = $('#auto-play-check').is(':checked') && data.turn === 'b' && !data.is_game_over && !App.blockAutoPlay;
+            // Добавляем пояснение
+            if (turnColor === playerColor) {
+                statusText += " — Твой ход";
+            } else {
+                statusText += " — Думает ИИ...";
+            }
+        }
+        $('#game-status-line').text(statusText);
 
-    if (canAutoPlay) {
-        setTimeout(makeAiMove, 600);
+        // Шкала и прочее...
+        let displayScore = Math.max(-5, Math.min(5, data.score));
+        $('#eval-bar-fill').css('height', ((displayScore + 5) / 10 * 100) + '%');
+        $('#eval-score-text').text(data.score.toFixed(1));
+
+    } catch (err) {
+        console.error("UI Update Error:", err);
     }
-
-    App.blockAutoPlay = false;
-
-    // Текст статуса
-    let statusText = data.is_game_over ? "Игра окончена" : (data.turn === 'w' ? "Ход белых" : "Ход черных");
-    $('#game-status-line').text(statusText);
 };
 
 window.makeAiMove = async function() {
+    if (App.isAiThinking) return;
+
+    App.isAiThinking = true;
     await fetch('/stockfish_move', { method: 'POST' });
+    App.isAiThinking = false;
+
     updateUI();
 };
 
@@ -95,6 +117,36 @@ window.renderHistory = function(history) {
         // Автоматическая прокрутка вниз к последнему ходу (аналог AutoScroll)
         container.scrollTop = container.scrollHeight;
     }
+};
+
+// Смена цвета (Просто переворачивает доску и дергает UI)
+window.changeOrientation = function() {
+    if (!board) return;
+    const color = $('#player-color').val();
+    board.orientation(color);
+    updateUI();
+};
+
+window.updateDepth = async function(val){
+    $('depth-value').text(val);
+    await fetch('/settings', {
+        method: 'POST',
+        headers: {'Content-Type' : 'application/json'},
+        body: JSON.stringify({ depth: parseInt(val) })
+    });
+}
+
+// Новая игра (Теперь БЕЗ лишних вызовов makeAiMove)
+window.resetGame = async function() {
+    App.blockAutoPlay = false;
+    App.isAiThinking = false;
+    await fetch('/reset', { method: 'POST' });
+
+    // Просто синхронизируем вид и просим сервер дать статус
+    const color = $('#player-color').val();
+    board.orientation(color);
+
+    updateUI(); // updateUI сам решит, нужно ли ИИ ходить (например, за белых)
 };
 
 // Исправленная функция подсветки
@@ -190,5 +242,6 @@ function initNormalBoard() {
 // Старт
 $(document).ready(function () {
     initNormalBoard(); // Используем общую функцию инициализации
+    changeOrientation();
     updateUI();
 });

@@ -140,3 +140,20 @@ button.danger-btn {
     box-shadow: inset 0 0 5px 5px #f1c40f !important; /* Золотая рамка */
     background-color: rgba(241, 196, 15, 0.4) !important; /* Полупрозрачный желтый */
 }
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="range"] {
+    cursor: pointer;
+}
